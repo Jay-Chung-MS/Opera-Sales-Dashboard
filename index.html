@@ -3,464 +3,634 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>전사 매출 대시보드</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<title>Opera Sales Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+:root {
+  --bg: #0d0f14;
+  --surface: #161920;
+  --surface2: #1e2230;
+  --border: #2a2f3d;
+  --text: #e8eaf0;
+  --muted: #7a8099;
+  --accent: #4f7fff;
+  --accent2: #7c5cfc;
+  --green: #34d399;
+  --red: #f87171;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+  --cyan: #22d3ee;
+  --pink: #f472b6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  :root {
-    --bg: #0a0e1a;
-    --surface: #111827;
-    --surface2: #1a2235;
-    --border: #1e2d47;
-    --accent: #3b82f6;
-    --accent2: #06b6d4;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --text: #e2e8f0;
-    --text-muted: #64748b;
-  }
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.logo span { color: var(--accent); }
+#updated { font-size: 12px; color: var(--muted); }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ── MAIN NAV ── */
+.main-nav {
+  display: flex; gap: 4px; padding: 16px 32px 0;
+  border-bottom: 1px solid var(--border); background: var(--surface);
+  overflow-x: auto;
+}
+.main-nav button {
+  padding: 10px 20px; border: none; background: none; color: var(--muted);
+  font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;
+  white-space: nowrap; transition: all .2s; font-family: inherit;
+}
+.main-nav button:hover { color: var(--text); }
+.main-nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans KR', sans-serif;
-    min-height: 100vh;
-    padding: 24px;
-  }
+/* ── CONTENT ── */
+.content { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* ── KPI CARDS ── */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; transition: border-color .2s;
+}
+.kpi-card:hover { border-color: var(--accent); }
+.kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+.kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -1px; }
+.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.kpi-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.kpi-badge.up { background: rgba(52,211,153,.15); color: var(--green); }
+.kpi-badge.down { background: rgba(248,113,113,.15); color: var(--red); }
 
-  .wrapper { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; }
+/* ── SECTION TITLE ── */
+.section-title { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 16px; }
 
-  /* Loading */
-  #loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 60vh;
-    gap: 16px;
-  }
-  .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #loading p { color: var(--text-muted); font-size: 14px; }
+/* ── PERIOD TABS ── */
+.period-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.period-tabs button {
+  padding: 7px 18px; border: 1px solid var(--border); border-radius: 8px;
+  background: none; color: var(--muted); font-size: 13px; cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.period-tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-  /* Header */
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 32px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .header-left h1 {
-    font-size: 28px;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #e2e8f0 0%, #3b82f6 60%, #06b6d4 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .header-left p { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+/* ── SEGMENT FILTER ── */
+.seg-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.seg-btn {
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 12px; cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.seg-btn:hover { border-color: var(--text); color: var(--text); }
+.seg-btn.active { border-color: transparent; color: #fff; }
 
-  .view-toggle { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
-  .view-btn { padding: 6px 16px; border: none; border-radius: 5px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; color: var(--text-muted); background: transparent; transition: all 0.2s; font-weight: 500; }
-  .view-btn.active { background: var(--accent); color: #fff; }
+/* ── CHART CARDS ── */
+.chart-grid { display: grid; gap: 20px; }
+.chart-grid.cols2 { grid-template-columns: 1fr 1fr; }
+.chart-grid.cols3 { grid-template-columns: 2fr 1fr; }
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+}
+.chart-card h3 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .5px; }
+.chart-wrap { position: relative; }
 
-  /* KPI */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; transition: border-color 0.2s; }
-  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.2s; }
-  .kpi-card:hover::before { opacity: 1; }
-  .kpi-card:hover { border-color: var(--accent); }
-  .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
-  .kpi-value { font-size: 26px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1; margin-bottom: 8px; }
-  .kpi-value span { font-size: 14px; font-weight: 400; color: var(--text-muted); }
-  .kpi-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 3px 8px; border-radius: 4px; }
-  .badge-up { background: rgba(16,185,129,0.15); color: var(--success); }
-  .badge-down { background: rgba(239,68,68,0.15); color: var(--danger); }
-  .badge-neutral { background: rgba(100,116,139,0.15); color: var(--text-muted); }
+/* ── MTD PROGRESS ── */
+.mtd-grid { display: grid; gap: 12px; }
+.mtd-row { display: grid; grid-template-columns: 140px 1fr 80px 80px; align-items: center; gap: 16px; }
+.mtd-name { font-size: 13px; font-weight: 500; }
+.prog-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.prog-bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.mtd-val { font-size: 12px; color: var(--muted); text-align: right; }
+.mtd-pct { font-size: 13px; font-weight: 700; text-align: right; }
 
-  /* MTD */
-  .mtd-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-  .section-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-  .section-title::before { content: ''; width: 3px; height: 14px; background: linear-gradient(to bottom, var(--accent), var(--accent2)); border-radius: 2px; }
-  .mtd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .mtd-item { background: var(--surface2); border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
-  .mtd-item-label { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .mtd-nums { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-  .mtd-actual { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
-  .mtd-target { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
-  .progress-bar { height: 5px; background: var(--border); border-radius: 3px; margin-bottom: 6px; }
-  .progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
-  .progress-pct { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; text-align: right; }
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 14px; text-align: right; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+th:first-child { text-align: left; }
+td { padding: 10px 14px; text-align: right; border-bottom: 1px solid rgba(42,47,61,.5); }
+td:first-child { text-align: left; font-weight: 500; }
+tr:hover td { background: var(--surface2); }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
 
-  /* Charts */
-  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
-  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .chart-title { font-size: 14px; font-weight: 700; color: var(--text); }
-  .chart-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .legend { display: flex; gap: 16px; align-items: center; }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
-  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* ── CHANNEL TABLE ── */
+.ch-tbl th:first-child, .ch-tbl td:first-child { width: 180px; }
 
-  /* Table */
-  .weekly-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-  .table-wrapper { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { text-align: right; padding: 8px 12px; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  th:first-child { text-align: left; }
-  td { text-align: right; padding: 10px 12px; border-bottom: 1px solid rgba(30,45,71,0.5); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); white-space: nowrap; }
-  td:first-child { text-align: left; font-family: 'Noto Sans KR', sans-serif; font-weight: 600; font-size: 12px; color: var(--text-muted); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(59,130,246,0.04); }
-  .td-pos { color: var(--success); }
-  .td-neg { color: var(--danger); }
-  .td-total { color: var(--accent); font-weight: 700; }
+/* ── YOY COMPARE BAR ── */
+.yoy-block { margin-top: 8px; }
 
-  .notes { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
-  .note-badge { font-size: 10px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; }
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .chart-grid.cols2, .chart-grid.cols3 { grid-template-columns: 1fr; }
+  .content { padding: 20px 16px; }
+  header { padding: 14px 16px; }
+  .main-nav { padding: 12px 16px 0; }
+}
 
-  .view-panel { display: none; }
-  .view-panel.active { display: block; }
-
-  @media (max-width: 900px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .charts-grid { grid-template-columns: 1fr; }
-    .mtd-grid { grid-template-columns: repeat(2, 1fr); }
-  }
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--muted); z-index: 100;
+}
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin-right: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<div class="wrapper">
+<div id="loading"><div class="spinner"></div>데이터 로딩 중...</div>
 
-  <!-- Loading -->
-  <div id="loading">
-    <div class="spinner"></div>
-    <p>데이터 불러오는 중...</p>
-  </div>
+<header>
+  <div class="logo">Opera <span>Sales</span></div>
+  <div id="updated">—</div>
+</header>
 
-  <!-- Dashboard (hidden until data loads) -->
-  <div id="dashboard" style="display:none">
-    <header>
-      <div class="header-left">
-        <h1>전사 매출 대시보드</h1>
-        <p id="last-update"></p>
-      </div>
-      <div class="view-toggle">
-        <button class="view-btn active" onclick="switchView('monthly', event)">월별</button>
-        <button class="view-btn" onclick="switchView('weekly', event)">주별</button>
-      </div>
-    </header>
+<nav class="main-nav">
+  <button class="active" onclick="switchTab('summary')">전사 Summary</button>
+  <button onclick="switchTab('dom_b2b')">국내 B2B</button>
+  <button onclick="switchTab('dom_b2c')">국내 B2C</button>
+  <button onclick="switchTab('ovs_b2b_direct')">해외 B2B 직수출</button>
+  <button onclick="switchTab('ovs_b2b_indirect')">해외 B2B 간접</button>
+  <button onclick="switchTab('ovs_b2c')">해외 B2C</button>
+</nav>
 
-    <div class="kpi-grid" id="kpi-grid"></div>
-
-    <div class="mtd-section">
-      <div class="section-title" id="mtd-title">MTD 목표 달성 현황</div>
-      <div class="mtd-grid" id="mtd-grid"></div>
-    </div>
-
-    <div class="view-panel active" id="panel-monthly">
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">월별 매출 추이</div><div class="chart-subtitle">전체 / 국내 / 해외</div></div>
-            <div class="legend">
-              <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>합계</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>국내</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>해외</div>
-            </div>
-          </div>
-          <canvas id="monthly-trend" height="200"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header"><div><div class="chart-title">국내/해외 비중</div><div class="chart-subtitle">최근 12개월 누계</div></div></div>
-          <canvas id="pie-chart" height="200"></canvas>
-        </div>
-      </div>
-      <div class="chart-card" style="margin-bottom:20px">
-        <div class="chart-header">
-          <div><div class="chart-title">MoM / YoY 증감률</div><div class="chart-subtitle">(%)</div></div>
-          <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>MoM</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>YoY</div>
-          </div>
-        </div>
-        <canvas id="growth-chart" height="120"></canvas>
-      </div>
-      <div class="weekly-section">
-        <div class="section-title">월별 상세 데이터</div>
-        <div class="table-wrapper"><table id="monthly-table"></table></div>
-      </div>
-    </div>
-
-    <div class="view-panel" id="panel-weekly">
-      <div class="chart-card" style="margin-bottom:20px">
-        <div class="chart-header">
-          <div><div class="chart-title">주별 매출 추이 (2025–2026)</div><div class="chart-subtitle">ISO Week 기준</div></div>
-          <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>합계</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>국내</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>해외</div>
-          </div>
-        </div>
-        <canvas id="weekly-trend" height="150"></canvas>
-      </div>
-      <div class="weekly-section">
-        <div class="section-title">주별 상세 데이터</div>
-        <div class="table-wrapper"><table id="weekly-table"></table></div>
-      </div>
-    </div>
-
-    <div class="notes">
-      <span class="note-badge">단위: 백만원</span>
-      <span class="note-badge">국내 B2B: 반품 포함 기준</span>
-      <span class="note-badge">해외 B2B 직수출: 선적 시점 매출 인식</span>
-      <span class="note-badge">국내 B2C: 수수료 포함</span>
-    </div>
-  </div>
-</div>
+<div class="content" id="main-content"></div>
 
 <script>
-const fmt = v => v ? v.toLocaleString('ko-KR', {minimumFractionDigits:1, maximumFractionDigits:1}) : '-';
-const fmtPct = v => v !== null && v !== undefined ? `${v > 0 ? '+' : ''}${v.toFixed(1)}%` : '-';
+let DATA = null;
+let activeTab = 'summary';
+let summaryPeriod = 'monthly';
+let channelPeriod = 'monthly';
+let activeSegs = new Set(['total','domestic','overseas','b2b_dom','b2c_dom','b2b_direct','b2b_indirect','b2c_ovs']);
 
-const CHART_DEFAULTS = {
-  responsive: true,
-  interaction: { mode: 'index', intersect: false },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: '#1a2235', borderColor: '#1e2d47', borderWidth: 1,
-      titleColor: '#94a3b8', bodyColor: '#e2e8f0', padding: 10,
-      callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== undefined ? ctx.parsed.y.toLocaleString('ko-KR', {minimumFractionDigits:1}) : '-'}` }
-    }
-  },
-  scales: {
-    x: { grid: { color: 'rgba(30,45,71,0.5)' }, ticks: { color: '#64748b', font: { size: 10 } } },
-    y: { grid: { color: 'rgba(30,45,71,0.5)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => v.toLocaleString('ko-KR') } }
-  }
+// ── COLORS ──
+const SEG_COLORS = {
+  total:        '#4f7fff',
+  domestic:     '#34d399',
+  overseas:     '#f472b6',
+  b2b_dom:      '#22d3ee',
+  b2c_dom:      '#a78bfa',
+  b2b_direct:   '#fbbf24',
+  b2b_indirect: '#fb923c',
+  b2c_ovs:      '#f87171',
 };
+const SEG_LABELS = {
+  total:        '합계',
+  domestic:     '국내',
+  overseas:     '해외',
+  b2b_dom:      '국내 B2B',
+  b2c_dom:      '국내 B2C',
+  b2b_direct:   '해외 B2B 직수출',
+  b2b_indirect: '해외 B2B 간접',
+  b2c_ovs:      '해외 B2C',
+};
+const CHANNEL_COLORS = ['#4f7fff','#34d399','#f472b6','#22d3ee','#a78bfa','#fbbf24','#fb923c','#f87171','#6ee7b7','#93c5fd','#fda4af','#fdba74','#c4b5fd','#86efac','#67e8f9','#fcd34d'];
 
-let MONTHLY = [], WEEKLY = [], MTD = {};
-let charts = {};
-
-function renderKPI() {
-  const recent = MONTHLY.filter(d => d.total > 0).slice(-1)[0];
-  const ytd2025 = MONTHLY.filter(d => d.year === 2025).reduce((s,d) => s+d.total, 0);
-  const ytd2024 = MONTHLY.filter(d => d.year === 2024).reduce((s,d) => s+d.total, 0);
-  const ytdGrowth = ((ytd2025 - ytd2024) / ytd2024 * 100).toFixed(1);
-  const wk2026 = WEEKLY.filter(d => d.year === 2026);
-  const avgWeekly = wk2026.length ? Math.round(wk2026.reduce((s,d)=>s+d.total,0) / wk2026.length) : 0;
-  const mtdAchieve = MTD['합계'] ? MTD['합계'].progress : 0;
-
-  const cards = [
-    { label: '최근월 총 매출', value: fmt(recent.total), unit: '백만원', badge: fmtPct(recent.mom), badgeType: recent.mom >= 0 ? 'up' : 'down', sub: `${recent.label} MoM` },
-    { label: '2025 누계 매출', value: fmt(ytd2025), unit: '백만원', badge: `vs 2024: ${ytdGrowth > 0 ? '+' : ''}${ytdGrowth}%`, badgeType: ytdGrowth >= 0 ? 'up' : 'down', sub: '2024년 대비' },
-    { label: 'MTD 달성률', value: `${mtdAchieve}`, unit: '%', badge: mtdAchieve >= 100 ? '목표 달성' : '목표 미달', badgeType: mtdAchieve >= 100 ? 'up' : 'down', sub: 'MTD 기준' },
-    { label: '2026 주평균 매출', value: avgWeekly.toLocaleString(), unit: '백만원', badge: '2026 YTD', badgeType: 'neutral', sub: `${wk2026.length}주 평균` },
-  ];
-
-  document.getElementById('kpi-grid').innerHTML = cards.map(c => `
-    <div class="kpi-card">
-      <div class="kpi-label">${c.label}</div>
-      <div class="kpi-value">${c.value} <span>${c.unit}</span></div>
-      <div class="kpi-badge badge-${c.badgeType}">${c.badge}</div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:6px">${c.sub}</div>
-    </div>
-  `).join('');
+function fmt(v, dec=0) {
+  if (v == null || isNaN(v)) return '—';
+  return v.toLocaleString('ko-KR', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
+function pctBadge(v) {
+  if (v == null) return '';
+  const cls = v >= 0 ? 'up' : 'down';
+  const sign = v >= 0 ? '▲' : '▼';
+  return `<span class="kpi-badge ${cls}">${sign} ${Math.abs(v).toFixed(1)}%</span>`;
+}
+function progColor(pct) {
+  if (!pct) return '#4f7fff';
+  if (pct >= 100) return '#34d399';
+  if (pct >= 70) return '#4f7fff';
+  if (pct >= 50) return '#fbbf24';
+  return '#f87171';
 }
 
-function renderMTD() {
-  const keys = ['합계','국내','B2B(국내)','B2C(국내)','해외','B2B직수출','B2B간접수출','B2C(해외)'];
-  document.getElementById('mtd-grid').innerHTML = keys.filter(k => MTD[k]).map(k => {
-    const d = MTD[k];
-    const pct = d.progress;
-    const color = pct >= 100 ? 'var(--success)' : pct >= 80 ? 'var(--warning)' : 'var(--danger)';
-    return `
-      <div class="mtd-item">
-        <div class="mtd-item-label">${k}</div>
-        <div class="mtd-nums">
-          <div class="mtd-actual">${fmt(d.mtd)}</div>
-          <div class="mtd-target">목표 ${fmt(d.target)}</div>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(pct/1.3*100, 100)}%;background:${color}"></div></div>
-        <div class="progress-pct" style="color:${color}">${pct.toFixed(1)}%</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function destroyCharts() {
-  Object.values(charts).forEach(c => c && c.destroy());
-  charts = {};
-}
-
-function renderMonthlyCharts() {
-  charts.trend = new Chart(document.getElementById('monthly-trend'), {
-    type: 'bar',
-    data: {
-      labels: MONTHLY.map(d => d.label),
-      datasets: [
-        { label: '합계', data: MONTHLY.map(d=>d.total), backgroundColor: 'rgba(59,130,246,0.7)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 3, order: 2 },
-        { label: '국내', data: MONTHLY.map(d=>d.domestic||null), type: 'line', borderColor: '#06b6d4', backgroundColor: 'transparent', pointRadius: 2, borderWidth: 2, tension: 0.3, order: 1 },
-        { label: '해외', data: MONTHLY.map(d=>d.overseas||null), type: 'line', borderColor: '#8b5cf6', backgroundColor: 'transparent', pointRadius: 2, borderWidth: 2, tension: 0.3, order: 0 },
-      ]
-    },
-    options: CHART_DEFAULTS
+// ── FETCH DATA ──
+fetch('data.json?t=' + Date.now())
+  .then(r => r.json())
+  .then(d => {
+    DATA = d;
+    document.getElementById('updated').textContent = '업데이트: ' + (d.updated_at || '—');
+    document.getElementById('loading').style.display = 'none';
+    renderTab('summary');
+  })
+  .catch(e => {
+    document.getElementById('loading').innerHTML = '⚠️ 데이터를 불러올 수 없습니다.';
   });
 
-  const last12 = MONTHLY.filter(d => d.domestic > 0 || d.overseas > 0).slice(-12);
-  const domSum = last12.reduce((s,d) => s+d.domestic, 0);
-  const ovsSum = last12.reduce((s,d) => s+d.overseas, 0);
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.main-nav button').forEach((b,i) => {
+    const tabs = ['summary','dom_b2b','dom_b2c','ovs_b2b_direct','ovs_b2b_indirect','ovs_b2c'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  renderTab(tab);
+}
 
-  charts.pie = new Chart(document.getElementById('pie-chart'), {
+function renderTab(tab) {
+  if (tab === 'summary') renderSummary();
+  else renderChannel(tab);
+}
+
+// ─────────────────────────────────────────────
+// SUMMARY TAB
+// ─────────────────────────────────────────────
+function renderSummary() {
+  const monthly = DATA.monthly;
+  const weekly  = DATA.weekly;
+  const mtd     = DATA.mtd;
+
+  // KPI 계산
+  const rec2026m = monthly.filter(m => m.year === 2026);
+  const latestM  = rec2026m[rec2026m.length - 1];
+  const sum2025  = monthly.filter(m => m.year === 2025).reduce((s,m) => s + m.total, 0);
+  const sum2026  = rec2026m.reduce((s,m) => s + m.total, 0);
+  const rec2026w = weekly.filter(w => w.year === 2026);
+  const avgWeek  = rec2026w.length ? rec2026w.reduce((s,w) => s + w.total, 0) / rec2026w.length : 0;
+
+  // 2025 같은기간 누계
+  const months2026 = rec2026m.map(m => m.month);
+  const sum2025same = monthly.filter(m => m.year === 2025 && months2026.includes(m.month)).reduce((s,m) => s + m.total, 0);
+  const yoyPct = sum2025same ? ((sum2026 - sum2025same) / sum2025same * 100) : null;
+
+  let html = `
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">최근월 매출</div>
+      <div class="kpi-value">${latestM ? fmt(latestM.total) : '—'}<small style="font-size:14px;color:var(--muted)"> 백만</small></div>
+      <div class="kpi-sub" style="margin-top:8px">${latestM ? latestM.label : ''} ${latestM?.mom != null ? pctBadge(latestM.mom) + ' MoM' : ''}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">2026 누계 매출</div>
+      <div class="kpi-value">${fmt(sum2026)}<small style="font-size:14px;color:var(--muted)"> 백만</small></div>
+      <div class="kpi-sub" style="margin-top:8px">vs 2025 동기간 ${pctBadge(yoyPct)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">MTD 달성률 (합계)</div>
+      <div class="kpi-value" style="color:${progColor(mtd?.합계?.progress)}">${mtd?.합계?.progress != null ? mtd.합계.progress.toFixed(1) + '%' : '—'}</div>
+      <div class="kpi-sub" style="margin-top:8px">MTD ${fmt(mtd?.합계?.mtd)} / 목표 ${fmt(mtd?.합계?.target)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">2026 주 평균</div>
+      <div class="kpi-value">${fmt(avgWeek, 0)}<small style="font-size:14px;color:var(--muted)"> 백만</small></div>
+      <div class="kpi-sub" style="margin-top:8px">${rec2026w.length}주 기준</div>
+    </div>
+  </div>
+
+  <!-- MTD -->
+  <div class="chart-card" style="margin-bottom:20px">
+    <h3>MTD 목표 달성 현황</h3>
+    <div class="mtd-grid">
+  `;
+  const mtdOrder = ['합계','국내','B2B(국내)','B2C(국내)','해외','B2B직수출','B2B간접수출','B2C(해외)'];
+  mtdOrder.forEach(key => {
+    const d = mtd[key];
+    if (!d) return;
+    const pct = d.progress || 0;
+    html += `
+    <div class="mtd-row">
+      <div class="mtd-name">${key}</div>
+      <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${Math.min(pct,100)}%;background:${progColor(pct)}"></div></div>
+      <div class="mtd-val">${fmt(d.mtd)} / ${fmt(d.target)}</div>
+      <div class="mtd-pct" style="color:${progColor(pct)}">${pct ? pct.toFixed(1)+'%' : '—'}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // Period selector
+  html += `
+  <div class="period-tabs" id="period-tabs">
+    <button class="${summaryPeriod==='monthly'?'active':''}" onclick="setSummaryPeriod('monthly')">월별</button>
+    <button class="${summaryPeriod==='weekly'?'active':''}" onclick="setSummaryPeriod('weekly')">주별</button>
+  </div>
+
+  <!-- Segment filter -->
+  <div class="seg-filter" id="seg-filter">
+  `;
+  const summarySegs = ['total','domestic','overseas','b2b_dom','b2c_dom','b2b_direct','b2b_indirect','b2c_ovs'];
+  summarySegs.forEach(s => {
+    const on = activeSegs.has(s);
+    html += `<button class="seg-btn${on?' active':''}" style="${on?'background:'+SEG_COLORS[s]+';border-color:'+SEG_COLORS[s]:''}" onclick="toggleSeg('${s}')">${SEG_LABELS[s]}</button>`;
+  });
+  html += `</div>`;
+
+  // Charts
+  html += `
+  <div class="chart-grid" style="margin-bottom:20px">
+    <div class="chart-card">
+      <h3 id="trend-title">${summaryPeriod==='monthly'?'월별':'주별'} 매출 추이</h3>
+      <div class="chart-wrap" style="height:320px"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid cols2" style="margin-bottom:20px">
+    <div class="chart-card">
+      <h3>2025 vs 2026 누계 비교 (월 기준)</h3>
+      <div class="chart-wrap" style="height:280px"><canvas id="yoyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>국내/해외 비중</h3>
+      <div class="chart-wrap" style="height:280px"><canvas id="donutChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Detail table -->
+  <div class="chart-card">
+    <h3 id="tbl-title">${summaryPeriod==='monthly'?'월별':'주별'} 상세 데이터</h3>
+    <div class="tbl-wrap" id="detail-table"></div>
+  </div>
+  `;
+
+  document.getElementById('main-content').innerHTML = html;
+  drawSummaryCharts();
+}
+
+function setSummaryPeriod(p) {
+  summaryPeriod = p;
+  document.querySelectorAll('#period-tabs button').forEach((b,i) => b.classList.toggle('active', i===(p==='monthly'?0:1)));
+  document.getElementById('trend-title').textContent = (p==='monthly'?'월별':'주별') + ' 매출 추이';
+  document.getElementById('tbl-title').textContent = (p==='monthly'?'월별':'주별') + ' 상세 데이터';
+  drawSummaryCharts();
+}
+
+function toggleSeg(s) {
+  if (activeSegs.has(s)) { if (activeSegs.size > 1) activeSegs.delete(s); }
+  else activeSegs.add(s);
+  document.querySelectorAll('.seg-btn').forEach(b => {
+    const key = b.getAttribute('onclick').match(/'(\w+)'/)[1];
+    const on = activeSegs.has(key);
+    b.classList.toggle('active', on);
+    b.style.background = on ? SEG_COLORS[key] : '';
+    b.style.borderColor = on ? SEG_COLORS[key] : '';
+  });
+  drawSummaryCharts();
+}
+
+let charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function drawSummaryCharts() {
+  const isMonthly = summaryPeriod === 'monthly';
+  const rows = isMonthly ? DATA.monthly : DATA.weekly;
+  const labels = rows.map(r => isMonthly ? r.label : r.label);
+
+  // ── Trend chart ──
+  destroyChart('trendChart');
+  const segsToShow = ['total','domestic','overseas','b2b_dom','b2c_dom','b2b_direct','b2b_indirect','b2c_ovs']
+    .filter(s => activeSegs.has(s));
+
+  const datasets = segsToShow.map(s => ({
+    label: SEG_LABELS[s],
+    data: rows.map(r => r[s] || 0),
+    borderColor: SEG_COLORS[s],
+    backgroundColor: SEG_COLORS[s] + '22',
+    tension: .35, fill: false,
+    pointRadius: 3, pointHoverRadius: 6,
+    borderWidth: 2,
+  }));
+
+  charts['trendChart'] = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: chartOpts(),
+  });
+
+  // ── YoY compare ──
+  destroyChart('yoyChart');
+  const months25 = DATA.monthly.filter(m => m.year===2025).sort((a,b)=>a.month-b.month);
+  const months26 = DATA.monthly.filter(m => m.year===2026).sort((a,b)=>a.month-b.month);
+  const maxMo = Math.max(...months26.map(m=>m.month));
+  const yoyLabels = Array.from({length:maxMo}, (_,i) => (i+1)+'월');
+  charts['yoyChart'] = new Chart(document.getElementById('yoyChart'), {
+    type: 'bar',
+    data: {
+      labels: yoyLabels,
+      datasets: [
+        { label: '2025', data: yoyLabels.map((_,i)=>{ const m=months25.find(x=>x.month===i+1); return m?m.total:0; }), backgroundColor: '#2a2f3d', borderRadius:4 },
+        { label: '2026', data: yoyLabels.map((_,i)=>{ const m=months26.find(x=>x.month===i+1); return m?m.total:0; }), backgroundColor: '#4f7fff', borderRadius:4 },
+      ]
+    },
+    options: { ...chartOpts(), plugins: { legend: { display:true, labels:{ color:'#7a8099', font:{size:11} } } } },
+  });
+
+  // ── Donut ──
+  destroyChart('donutChart');
+  const latest = DATA.monthly.filter(m=>m.year===2026);
+  const domSum = latest.reduce((s,m)=>s+(m.domestic||0),0);
+  const ovsSum = latest.reduce((s,m)=>s+(m.overseas||0),0);
+  charts['donutChart'] = new Chart(document.getElementById('donutChart'), {
     type: 'doughnut',
     data: {
-      labels: ['국내', '해외'],
-      datasets: [{ data: [domSum, ovsSum], backgroundColor: ['#3b82f6','#8b5cf6'], borderColor: '#111827', borderWidth: 3 }]
+      labels: ['국내','해외'],
+      datasets: [{ data: [domSum, ovsSum], backgroundColor: ['#34d399','#f472b6'], borderWidth:0, hoverOffset:8 }]
     },
     options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true, position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 16 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('ko-KR', {minimumFractionDigits:1})} (${(ctx.parsed/(domSum+ovsSum)*100).toFixed(1)}%)` } }
-      },
-      cutout: '65%'
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins: { legend: { position:'bottom', labels:{ color:'#7a8099', padding:16, font:{size:12} } }, tooltip:{ callbacks:{ label: ctx => ' ' + fmt(ctx.raw) + ' 백만' } } }
     }
   });
 
-  const gd = MONTHLY.filter(d => d.mom !== null || d.yoy !== null);
-  charts.growth = new Chart(document.getElementById('growth-chart'), {
+  // ── Detail table ──
+  let thtml = '<table>';
+  if (isMonthly) {
+    thtml += '<tr><th>기간</th><th>합계</th><th>국내</th><th>국내B2B</th><th>국내B2C</th><th>해외</th><th>해외B2B직</th><th>해외B2B간</th><th>해외B2C</th><th>MoM</th><th>YoY</th></tr>';
+    [...DATA.monthly].reverse().forEach(m => {
+      thtml += `<tr>
+        <td>${m.label}</td>
+        <td>${fmt(m.total)}</td>
+        <td>${fmt(m.domestic)}</td>
+        <td>${fmt(m.b2b_dom)}</td>
+        <td>${fmt(m.b2c_dom)}</td>
+        <td>${fmt(m.overseas)}</td>
+        <td>${fmt(m.b2b_direct)}</td>
+        <td>${fmt(m.b2b_indirect)}</td>
+        <td>${fmt(m.b2c_ovs)}</td>
+        <td class="${m.mom>=0?'pos':'neg'}">${m.mom!=null?(m.mom>=0?'+':'')+m.mom.toFixed(1)+'%':'—'}</td>
+        <td class="${m.yoy>=0?'pos':'neg'}">${m.yoy!=null?(m.yoy>=0?'+':'')+m.yoy.toFixed(1)+'%':'—'}</td>
+      </tr>`;
+    });
+  } else {
+    thtml += '<tr><th>주차</th><th>합계</th><th>국내</th><th>국내B2B</th><th>국내B2C</th><th>해외</th><th>해외B2B직</th><th>해외B2B간</th><th>해외B2C</th></tr>';
+    [...DATA.weekly].reverse().forEach(w => {
+      thtml += `<tr>
+        <td>${w.label}</td>
+        <td>${fmt(w.total)}</td>
+        <td>${fmt(w.domestic)}</td>
+        <td>${fmt(w.b2b_dom||0)}</td>
+        <td>${fmt(w.b2c_dom||0)}</td>
+        <td>${fmt(w.overseas)}</td>
+        <td>${fmt(w.b2b_direct||0)}</td>
+        <td>${fmt(w.b2b_indirect||0)}</td>
+        <td>${fmt(w.b2c_ovs||0)}</td>
+      </tr>`;
+    });
+  }
+  thtml += '</table>';
+  document.getElementById('detail-table').innerHTML = thtml;
+}
+
+// ─────────────────────────────────────────────
+// CHANNEL TAB
+// ─────────────────────────────────────────────
+const TAB_LABELS = {
+  dom_b2b: '국내 B2B',
+  dom_b2c: '국내 B2C',
+  ovs_b2b_direct: '해외 B2B 직수출',
+  ovs_b2b_indirect: '해외 B2B 간접수출',
+  ovs_b2c: '해외 B2C',
+};
+
+function renderChannel(tabKey) {
+  const chData = DATA.channels[tabKey];
+  if (!chData) { document.getElementById('main-content').innerHTML = '<p style="color:var(--muted)">데이터 없음</p>'; return; }
+
+  const isMonthly = channelPeriod === 'monthly';
+  const channels = isMonthly ? chData.monthly_channels : chData.weekly_channels;
+  const totalSeries = isMonthly ? chData.monthly_total : chData.weekly_total;
+  const chNames = Object.keys(channels);
+
+  // Period keys
+  const allKeys = [...new Set(Object.values(channels).flatMap(d => Object.keys(d)))].sort((a,b)=>+a-+b);
+  const labels = allKeys.map(k => isMonthly ? k+'월' : 'W'+k);
+
+  let html = `
+  <div class="period-tabs" id="ch-period-tabs">
+    <button class="${channelPeriod==='monthly'?'active':''}" onclick="setChPeriod('monthly','${tabKey}')">월별</button>
+    <button class="${channelPeriod==='weekly'?'active':''}" onclick="setChPeriod('weekly','${tabKey}')">주별</button>
+  </div>
+
+  <!-- Total trend -->
+  <div class="chart-card" style="margin-bottom:20px">
+    <h3>${TAB_LABELS[tabKey]} 합계 추이</h3>
+    <div class="chart-wrap" style="height:260px"><canvas id="chTotalChart"></canvas></div>
+  </div>
+
+  <!-- Channel breakdown -->
+  <div class="chart-grid cols2" style="margin-bottom:20px">
+    <div class="chart-card">
+      <h3>채널별 추이 (상위 8개)</h3>
+      <div class="chart-wrap" style="height:300px"><canvas id="chLineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>채널 구성 비중</h3>
+      <div class="chart-wrap" style="height:300px"><canvas id="chDonutChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Channel table -->
+  <div class="chart-card">
+    <h3>채널별 상세</h3>
+    <div class="tbl-wrap"><table class="ch-tbl">
+      <tr><th>채널</th>${allKeys.map(k=>isMonthly?`<th>${k}월</th>`:`<th>W${k}</th>`).join('')}<th>누계</th></tr>
+  `;
+
+  // sort by total
+  const chSorted = chNames.map(n => {
+    const sum = Object.values(channels[n]).reduce((s,v)=>s+v,0);
+    return { name: n, sum, data: channels[n] };
+  }).sort((a,b)=>b.sum-a.sum);
+
+  chSorted.forEach(ch => {
+    html += `<tr><td>${ch.name}</td>`;
+    allKeys.forEach(k => { html += `<td>${ch.data[k] ? fmt(ch.data[k]) : '—'}</td>`; });
+    html += `<td><strong>${fmt(ch.sum)}</strong></td></tr>`;
+  });
+
+  // Total row
+  html += `<tr style="background:var(--surface2)"><td><strong>합계</strong></td>`;
+  allKeys.forEach(k => { html += `<td><strong>${totalSeries[k] ? fmt(+totalSeries[k]) : '—'}</strong></td>`; });
+  const grandTotal = Object.values(totalSeries).reduce((s,v)=>s+(+v),0);
+  html += `<td><strong>${fmt(grandTotal)}</strong></td></tr>`;
+
+  html += `</table></div></div>`;
+  document.getElementById('main-content').innerHTML = html;
+
+  // Draw charts
+  // Total
+  destroyChart('chTotalChart');
+  const totalVals = allKeys.map(k => +(totalSeries[k]||0));
+  charts['chTotalChart'] = new Chart(document.getElementById('chTotalChart'), {
     type: 'bar',
     data: {
-      labels: gd.map(d=>d.label),
-      datasets: [
-        { label: 'MoM', data: gd.map(d=>d.mom), backgroundColor: gd.map(d => d.mom >= 0 ? 'rgba(6,182,212,0.7)' : 'rgba(239,68,68,0.5)'), borderRadius: 2 },
-        { label: 'YoY', data: gd.map(d=>d.yoy), backgroundColor: gd.map(d => d.yoy >= 0 ? 'rgba(245,158,11,0.7)' : 'rgba(239,68,68,0.4)'), borderRadius: 2 },
-      ]
+      labels,
+      datasets: [{
+        label: '합계',
+        data: totalVals,
+        backgroundColor: '#4f7fff88',
+        borderColor: '#4f7fff',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
     },
-    options: { ...CHART_DEFAULTS, scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v + '%' } } } }
+    options: { ...chartOpts(), plugins: { legend: { display:false } } },
   });
-}
 
-function renderWeeklyCharts() {
-  charts.weekly = new Chart(document.getElementById('weekly-trend'), {
+  // Line (top 8)
+  destroyChart('chLineChart');
+  const top8 = chSorted.slice(0, 8);
+  charts['chLineChart'] = new Chart(document.getElementById('chLineChart'), {
     type: 'line',
     data: {
-      labels: WEEKLY.map(d => d.label),
-      datasets: [
-        { label: '합계', data: WEEKLY.map(d=>d.total), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', pointRadius: 0, borderWidth: 2, fill: true, tension: 0.3 },
-        { label: '국내', data: WEEKLY.map(d=>d.domestic), borderColor: '#06b6d4', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 1.5, tension: 0.3 },
-        { label: '해외', data: WEEKLY.map(d=>d.overseas), borderColor: '#8b5cf6', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 1.5, tension: 0.3 },
-      ]
+      labels,
+      datasets: top8.map((ch, i) => ({
+        label: ch.name,
+        data: allKeys.map(k => ch.data[k]||0),
+        borderColor: CHANNEL_COLORS[i],
+        backgroundColor: 'transparent',
+        tension: .35, pointRadius:3, borderWidth:2,
+      }))
     },
-    options: CHART_DEFAULTS
+    options: { ...chartOpts(), plugins: { legend: { display:true, labels:{ color:'#7a8099', font:{size:10}, boxWidth:10 } } } },
+  });
+
+  // Donut
+  destroyChart('chDonutChart');
+  charts['chDonutChart'] = new Chart(document.getElementById('chDonutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: chSorted.slice(0,10).map(c=>c.name),
+      datasets: [{ data: chSorted.slice(0,10).map(c=>c.sum), backgroundColor: CHANNEL_COLORS.slice(0,10), borderWidth:0, hoverOffset:8 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins: { legend: { position:'right', labels:{ color:'#7a8099', padding:8, font:{size:10}, boxWidth:10 } }, tooltip:{ callbacks:{ label: ctx => ' ' + fmt(ctx.raw) + ' 백만' } } }
+    }
   });
 }
 
-function renderMonthlyTable() {
-  document.getElementById('monthly-table').innerHTML = `<thead><tr>
-    <th>기간</th><th>합계</th><th>국내</th><th>해외</th>
-    <th>B2B(국내)</th><th>B2C(국내)</th><th>B2B직수출</th><th>B2B간접수출</th><th>B2C(해외)</th>
-    <th>MoM</th><th>YoY</th>
-  </tr></thead><tbody>${MONTHLY.map(d => `
-    <tr>
-      <td>${d.label}</td>
-      <td class="td-total">${fmt(d.total)}</td>
-      <td>${d.domestic ? fmt(d.domestic) : '-'}</td>
-      <td>${d.overseas ? fmt(d.overseas) : '-'}</td>
-      <td>${d.b2b_dom ? fmt(d.b2b_dom) : '-'}</td>
-      <td>${d.b2c_dom ? fmt(d.b2c_dom) : '-'}</td>
-      <td>${d.b2b_direct ? fmt(d.b2b_direct) : '-'}</td>
-      <td>${d.b2b_indirect ? fmt(d.b2b_indirect) : '-'}</td>
-      <td>${d.b2c_ovs ? fmt(d.b2c_ovs) : '-'}</td>
-      <td class="${d.mom !== null ? (d.mom >= 0 ? 'td-pos' : 'td-neg') : ''}">${fmtPct(d.mom)}</td>
-      <td class="${d.yoy !== null ? (d.yoy >= 0 ? 'td-pos' : 'td-neg') : ''}">${fmtPct(d.yoy)}</td>
-    </tr>`).join('')}</tbody>`;
+function setChPeriod(p, tabKey) {
+  channelPeriod = p;
+  renderChannel(tabKey);
 }
 
-function renderWeeklyTable() {
-  document.getElementById('weekly-table').innerHTML = `<thead><tr>
-    <th>기간</th><th>합계</th><th>국내</th><th>해외</th>
-  </tr></thead><tbody>${WEEKLY.map(d => `
-    <tr>
-      <td>${d.label}</td>
-      <td class="td-total">${fmt(d.total)}</td>
-      <td>${fmt(d.domestic)}</td>
-      <td>${fmt(d.overseas)}</td>
-    </tr>`).join('')}</tbody>`;
+// ── Chart defaults ──
+function chartOpts() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode:'index', intersect:false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e2230',
+        borderColor: '#2a2f3d',
+        borderWidth: 1,
+        titleColor: '#e8eaf0',
+        bodyColor: '#7a8099',
+        padding: 12,
+        callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + fmt(ctx.raw) + ' 백만' }
+      }
+    },
+    scales: {
+      x: { grid:{ color:'#2a2f3d44' }, ticks:{ color:'#7a8099', font:{size:10} } },
+      y: { grid:{ color:'#2a2f3d44' }, ticks:{ color:'#7a8099', font:{size:10}, callback: v => fmt(v) } }
+    }
+  };
 }
-
-function switchView(view, e) {
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-  e.target.classList.add('active');
-  document.getElementById(`panel-${view}`).classList.add('active');
-  destroyCharts();
-  if (view === 'monthly') renderMonthlyCharts();
-  else renderWeeklyCharts();
-}
-
-// ── 핵심: data.json을 외부에서 fetch ──
-async function loadAndRender() {
-  try {
-    const res = await fetch('data.json?v=' + Date.now()); // 캐시 방지
-    if (!res.ok) throw new Error('data.json 로드 실패');
-    const data = await res.json();
-
-    MONTHLY = data.monthly || [];
-    WEEKLY  = data.weekly  || [];
-    MTD     = data.mtd     || {};
-
-    const lastMonth = MONTHLY.filter(d => d.total > 0).slice(-1)[0];
-    document.getElementById('last-update').textContent =
-      `최근 데이터: ${lastMonth.label} | 단위: 백만원 | 업데이트: ${new Date().toLocaleDateString('ko-KR')}`;
-
-    // MTD 제목에 기준월 표시
-    const mtdMonth = MONTHLY.filter(d=>d.total>0).slice(-1)[0];
-    document.getElementById('mtd-title').textContent =
-      `MTD 목표 달성 현황 (${mtdMonth.year}년 ${mtdMonth.month}월 기준)`;
-
-    renderKPI();
-    renderMTD();
-    renderMonthlyCharts();
-    renderMonthlyTable();
-    renderWeeklyTable();
-
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-  } catch(err) {
-    document.getElementById('loading').innerHTML =
-      `<div style="color:#ef4444;font-size:14px">⚠️ 데이터 로드 실패: ${err.message}</div>
-       <p style="color:#64748b;font-size:12px;margin-top:8px">data.json 파일이 같은 폴더에 있는지 확인하세요.</p>`;
-  }
-}
-
-document.addEventListener('DOMContentLoaded', loadAndRender);
 </script>
 </body>
 </html>
