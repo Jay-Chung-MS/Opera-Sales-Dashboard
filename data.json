@@ -394,16 +394,16 @@
       "year": 2026,
       "month": 3,
       "label": "2026-03",
-      "total": 1937.7,
-      "domestic": 908.3,
-      "overseas": 1029.4,
-      "b2b_dom": 677.8,
-      "b2c_dom": 230.5,
-      "b2b_direct": 136.8,
-      "b2b_indirect": 749.8,
-      "b2c_ovs": 142.8,
+      "total": 3093.7,
+      "domestic": 1087.6,
+      "overseas": 2006.1,
+      "b2b_dom": 818.1,
+      "b2c_dom": 269.5,
+      "b2b_direct": 311.8,
+      "b2b_indirect": 1404.3,
+      "b2c_ovs": 289.9,
       "mom": null,
-      "yoy": -79.4
+      "yoy": -67.1
     }
   ],
   "weekly": [
@@ -899,17 +899,17 @@
       "year": 2026,
       "week": 10,
       "label": "2026-W10",
-      "total": 1419.7,
-      "domestic": 431.9,
-      "overseas": 987.9
+      "total": 1662.2,
+      "domestic": 476.7,
+      "overseas": 1185.5
     },
     {
       "year": 2026,
       "week": 11,
       "label": "2026-W11",
-      "total": 459.9,
-      "domestic": 459.9,
-      "overseas": 0.0
+      "total": 1375.8,
+      "domestic": 596.7,
+      "overseas": 779.1
     }
   ],
   "mtd": {
@@ -953,5 +953,6 @@
       "target": 8584.0,
       "progress": 109.5
     }
-  }
+  },
+  "updated_at": "2026-03-11 22:51"
 }
