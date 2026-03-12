@@ -376,7 +376,7 @@ const state = {
   chTabView:{}, chTblView:{}, pieYear:{}, mixYear:2025, segYear:2025
 };
 
-function fmt(v) { if(!v&&v!==0) return '-'; return (v/1000).toFixed(1)+'B'; }
+function fmt(v) { if(!v&&v!==0) return '-'; return v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; }
 function fmtN(v) { if(!v&&v!==0) return '-'; return v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; }
 function pctStr(v,sign=true) {
   if(v==null||isNaN(v)) return '<span class="pct-na">-</span>';
