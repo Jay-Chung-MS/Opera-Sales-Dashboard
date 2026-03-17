@@ -482,7 +482,7 @@ function renderSummary() {
           <div class="mtd-pct">${badgePct(ytdProg)}</div>
         </div>
         <div class="mtd-target">YTD 목표: ${ytdTgt ? fmtN(ytdTgt) : '-'} | 이번달: ${fmtN(d.mtd)}</div>
-        ${pct!=null?`<div class="progress-bar" style="margin-top:4px"><div class="progress-fill ${fillClass(pct)}" style="width:${Math.min(pct,100)}%"></div></div>`:''}
+        ${ytdProg!=null?`<div class="progress-bar" style="margin-top:4px"><div class="progress-fill ${fillClass(ytdProg)}" style="width:${Math.min(ytdProg,100)}%"></div></div>`:''}
       </div>`;
     }).join('')}</div>`;
 
