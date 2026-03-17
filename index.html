@@ -376,8 +376,8 @@ const state = {
   chTabView:{}, chTblView:{}, pieYear:{}, mixYear:2025, segYear:2025
 };
 
-function fmt(v) { if(!v&&v!==0) return '-'; return v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; }
-function fmtN(v) { if(!v&&v!==0) return '-'; return v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; }
+function fmt(v) { if(!v&&v!==0) return '-'; const s=v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; return s.replace(/\d(?=(\d{3})+(?!\d))/g,'$&,'); }
+function fmtN(v) { if(!v&&v!==0) return '-'; const s=v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; return s.replace(/\d(?=(\d{3})+(?!\d))/g,'$&,'); }
 function pctStr(v,sign=true) {
   if(v==null||isNaN(v)) return '<span class="pct-na">-</span>';
   const c = v>=0?'pct-up':'pct-dn';
@@ -421,7 +421,7 @@ function renderSummary() {
     {
       label:'FY26 연간 목표',
       val: fmtN(ytd.annual_target),
-      sub: `총 ${(ytd.annual_target/100).toFixed(0)}억원`,
+      sub: `총 ${Math.round(ytd.annual_target/100).toLocaleString()}억원`,
       up: null
     },
     {
@@ -471,16 +471,16 @@ function renderSummary() {
   document.getElementById('mtd-summary').innerHTML =
     `<div class="mtd-grid">${mtdItems.map(i=>{
       const d = mtd[i.key]||{};
-      const pct = d.progress;
       const ytdV = d.ytd != null ? d.ytd : d.mtd;
-      const tgtV = d.target;
+      const ytdTgt = d.ytd_target;
+      const ytdProg = d.ytd_progress;
       return `<div class="mtd-item">
         <div class="mtd-ch">${i.ch}</div>
         <div class="mtd-row">
           <div class="mtd-actual num">${fmtN(ytdV)}</div>
-          <div class="mtd-pct">${badgePct(pct)}</div>
+          <div class="mtd-pct">${badgePct(ytdProg)}</div>
         </div>
-        <div class="mtd-target">YTD 목표: ${tgtV ? fmtN(tgtV) : '-'} | 이번달: ${fmtN(d.mtd)}</div>
+        <div class="mtd-target">YTD 목표: ${ytdTgt ? fmtN(ytdTgt) : '-'} | 이번달: ${fmtN(d.mtd)}</div>
         ${pct!=null?`<div class="progress-bar" style="margin-top:4px"><div class="progress-fill ${fillClass(pct)}" style="width:${Math.min(pct,100)}%"></div></div>`:''}
       </div>`;
     }).join('')}</div>`;
