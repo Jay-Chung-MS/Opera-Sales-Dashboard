@@ -376,8 +376,9 @@ const state = {
   chTabView:{}, chTblView:{}, pieYear:{}, mixYear:2025, segYear:2025
 };
 
-function fmt(v) { if(!v&&v!==0) return '-'; const s=v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; return s.replace(/\d(?=(\d{3})+(?!\d))/g,'$&,'); }
-function fmtN(v) { if(!v&&v!==0) return '-'; const s=v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; return s.replace(/\d(?=(\d{3})+(?!\d))/g,'$&,'); }
+function fmt(v) { if(!v&&v!==0) return '-'; return v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; }
+function fmtN(v) { if(!v&&v!==0) return '-'; return v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M'; }
+function fmtKRW(v) { return Math.round(v).toLocaleString(); }
 function pctStr(v,sign=true) {
   if(v==null||isNaN(v)) return '<span class="pct-na">-</span>';
   const c = v>=0?'pct-up':'pct-dn';
@@ -421,7 +422,7 @@ function renderSummary() {
     {
       label:'FY26 연간 목표',
       val: fmtN(ytd.annual_target),
-      sub: `총 ${Math.round(ytd.annual_target/100).toLocaleString()}억원`,
+      sub: `총 ${fmtKRW(ytd.annual_target/100)}억원`,
       up: null
     },
     {
