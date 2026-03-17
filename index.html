@@ -643,9 +643,12 @@ const CHANNEL_CONFIG = {
     label:'국내 B2C', targetKey:'dom_b2c',
     targets:{'쿠팡':'쿠팡','자사몰':'자사몰','공구/기타':'공구기타'}
   },
-  ovs_direct: { label:'해외 직수출', targetKey:null, targets:{} },
+  ovs_direct: {
+    label:'해외 직수출', targetKey:'ovs_direct',
+    targets:{'Eastern Europe':'Eastern Europe','Other Europe':'Other Europe'}
+  },
   ovs_indirect: {
-    label:'해외 간접수출', targetKey:'ovs_b2b',
+    label:'해외 간접수출', targetKey:'ovs_indirect',
     targets:{'Central Asia':'Central Asia','Greater China':'Greater China','Southeast Asia':'Southeast Asia','Japan':'Japan_b2b','US':'US_b2b','Europe/Middle East':'Middle East'}
   },
   ovs_b2c: {
