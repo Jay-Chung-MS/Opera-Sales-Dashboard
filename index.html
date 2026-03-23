@@ -673,18 +673,20 @@ function renderMtdSummary(mode) {
   }
 
   // 7 items (no 전사 합계)
-  const mtdItems = [
+  const mtdDom = [
     {ch:'국내', key:'국내'},
     {ch:'국내 B2B', key:'B2B(국내)'},
     {ch:'국내 B2C', key:'B2C(국내)'},
+  ];
+  const mtdOvs = [
     {ch:'해외', key:'해외'},
     {ch:'해외 직수출', key:'B2B직수출'},
     {ch:'해외 간접수출', key:'B2B간접수출'},
     {ch:'해외 B2C', key:'B2C(해외)'},
   ];
 
-  document.getElementById('mtd-summary').innerHTML =
-    `<div class="mtd-grid">${mtdItems.map(i=>{
+  function renderMtdRow(items) {
+    return items.map(i=>{
       const d = mtd[i.key]||{};
       if(mode==='ytd') {
         const ytdV = d.ytd != null ? d.ytd : d.mtd;
@@ -714,7 +716,12 @@ function renderMtdSummary(mode) {
           ${mtdProg!=null?`<div class="progress-bar" style="margin-top:4px"><div class="progress-fill ${fillClass(mtdProg)}" style="width:${Math.min(mtdProg,100)}%"></div></div>`:''}
         </div>`;
       }
-    }).join('')}</div>`;
+    }).join('');
+  }
+
+  document.getElementById('mtd-summary').innerHTML =
+    `<div class="mtd-grid">${renderMtdRow(mtdDom)}</div>
+     <div class="mtd-grid" style="margin-top:12px">${renderMtdRow(mtdOvs)}</div>`;
 }
 
 // ===================== PACE TIMELINE =====================
