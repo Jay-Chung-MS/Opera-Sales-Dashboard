@@ -111,6 +111,11 @@ tr:hover td { background:#eaf4fb; }
 .pace-stat-val.warning { color:var(--orange); }
 .pace-stat-val.good { color:var(--green); }
 .pace-stat-val.info { color:var(--accent); }
+
+.ch-filter-bar { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.ch-filter-btn { padding:5px 12px; border-radius:6px; font-size:12px; cursor:pointer; color:var(--muted); background:var(--surface); border:1px solid var(--border); transition:all .15s; }
+.ch-filter-btn:hover { color:var(--text); border-color:var(--muted); }
+.ch-filter-btn.active { background:var(--surface2); color:var(--brand); border-color:var(--brand); }
 </style>
 </head>
 <body>
@@ -235,6 +240,7 @@ tr:hover td { background:#eaf4fb; }
           <button class="toggle-btn" onclick="setChLineOverlay('dom_b2b','seq',this)">연도별</button>
         </div>
       </div>
+      <div id="ch-filter-line-dom_b2b" class="ch-filter-bar"></div>
       <div class="chart-wrap"><canvas id="ch-line-dom_b2b" height="200"></canvas></div>
     </div>
     <div class="card">
@@ -254,6 +260,7 @@ tr:hover td { background:#eaf4fb; }
         <button class="toggle-btn" onclick="setChTblView('dom_b2b','week',this)">주별</button>
       </div>
     </div>
+    <div id="ch-filter-dom_b2b" class="ch-filter-bar"></div>
     <div class="tbl-wrap"><table id="ch-tbl-dom_b2b"></table></div>
   </div>
 </div>
@@ -293,6 +300,7 @@ tr:hover td { background:#eaf4fb; }
           <button class="toggle-btn" onclick="setChLineOverlay('dom_b2c','seq',this)">연도별</button>
         </div>
       </div>
+      <div id="ch-filter-line-dom_b2c" class="ch-filter-bar"></div>
       <div class="chart-wrap"><canvas id="ch-line-dom_b2c" height="200"></canvas></div>
     </div>
     <div class="card">
@@ -312,6 +320,7 @@ tr:hover td { background:#eaf4fb; }
         <button class="toggle-btn" onclick="setChTblView('dom_b2c','week',this)">주별</button>
       </div>
     </div>
+    <div id="ch-filter-dom_b2c" class="ch-filter-bar"></div>
     <div class="tbl-wrap"><table id="ch-tbl-dom_b2c"></table></div>
   </div>
 </div>
@@ -351,6 +360,7 @@ tr:hover td { background:#eaf4fb; }
           <button class="toggle-btn" onclick="setChLineOverlay('ovs_direct','seq',this)">연도별</button>
         </div>
       </div>
+      <div id="ch-filter-line-ovs_direct" class="ch-filter-bar"></div>
       <div class="chart-wrap"><canvas id="ch-line-ovs_direct" height="200"></canvas></div>
     </div>
     <div class="card">
@@ -370,6 +380,7 @@ tr:hover td { background:#eaf4fb; }
         <button class="toggle-btn" onclick="setChTblView('ovs_direct','week',this)">주별</button>
       </div>
     </div>
+    <div id="ch-filter-ovs_direct" class="ch-filter-bar"></div>
     <div class="tbl-wrap"><table id="ch-tbl-ovs_direct"></table></div>
   </div>
 </div>
@@ -409,6 +420,7 @@ tr:hover td { background:#eaf4fb; }
           <button class="toggle-btn" onclick="setChLineOverlay('ovs_indirect','seq',this)">연도별</button>
         </div>
       </div>
+      <div id="ch-filter-line-ovs_indirect" class="ch-filter-bar"></div>
       <div class="chart-wrap"><canvas id="ch-line-ovs_indirect" height="200"></canvas></div>
     </div>
     <div class="card">
@@ -428,6 +440,7 @@ tr:hover td { background:#eaf4fb; }
         <button class="toggle-btn" onclick="setChTblView('ovs_indirect','week',this)">주별</button>
       </div>
     </div>
+    <div id="ch-filter-ovs_indirect" class="ch-filter-bar"></div>
     <div class="tbl-wrap"><table id="ch-tbl-ovs_indirect"></table></div>
   </div>
 </div>
@@ -467,6 +480,7 @@ tr:hover td { background:#eaf4fb; }
           <button class="toggle-btn" onclick="setChLineOverlay('ovs_b2c','seq',this)">연도별</button>
         </div>
       </div>
+      <div id="ch-filter-line-ovs_b2c" class="ch-filter-bar"></div>
       <div class="chart-wrap"><canvas id="ch-line-ovs_b2c" height="200"></canvas></div>
     </div>
     <div class="card">
@@ -486,6 +500,7 @@ tr:hover td { background:#eaf4fb; }
         <button class="toggle-btn" onclick="setChTblView('ovs_b2c','week',this)">주별</button>
       </div>
     </div>
+    <div id="ch-filter-ovs_b2c" class="ch-filter-bar"></div>
     <div class="tbl-wrap"><table id="ch-tbl-ovs_b2c"></table></div>
   </div>
 </div>
@@ -504,7 +519,8 @@ const state = {
   weekSeg:'all', monthView:'all', weekTableYear:2026,
   monthOverlay:'seq', weekOverlay:'seq', mtdMode:'ytd',
   chTabView:{}, chTblView:{}, pieYear:{}, mixYear:2025, segYear:2025,
-  chMtdMode:{}, chLineMode:{}, chBarOverlay:{}, chLineOverlay:{}, detailMode:'weekly'
+  chMtdMode:{}, chLineMode:{}, chBarOverlay:{}, chLineOverlay:{}, detailMode:'weekly',
+  chFilter:{}
 };
 
 // ===================== BUSINESS DAY HELPERS =====================
@@ -1008,48 +1024,45 @@ function renderWeekTable(year) {
 
 function renderMonthlyTable() {
   const cm = D.cur_month;
+  const year = state.weekTableYear;
   const monthly25 = D.summary.monthly.filter(m=>m.year===2025).sort((a,b)=>a.month-b.month);
   const monthly26 = D.summary.monthly.filter(m=>m.year===2026).sort((a,b)=>a.month-b.month);
   const MONTH_NAMES = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
-  // Build rows: show 2026 months first, then 2025 below
   const el = document.getElementById('weekTable');
-
   let rows = '';
 
-  // 2026 data
-  monthly26.forEach((m,idx) => {
-    const prev = idx > 0 ? monthly26[idx-1] : null;
-    const mom = prev && prev.total > 0 ? ((m.total - prev.total) / prev.total * 100) : null;
-    const same25 = monthly25.find(x=>x.month===m.month);
-    const yoy = same25 && same25.total > 0 ? ((m.total - same25.total) / same25.total * 100) : null;
-    rows += `<tr>
-      <td>26-${MONTH_NAMES[m.month-1]}</td>
-      <td class="num">${fmtN(m.total)}</td>
-      <td class="num">${fmtN(m.domestic)}</td>
-      <td class="num">${fmtN(m.overseas)}</td>
-      <td>${pctStr(mom)}</td>
-      <td>${pctStr(yoy)}</td>
-    </tr>`;
-  });
-
-  // Separator
-  rows += `<tr style="border-top:2px solid var(--border)"><td colspan="6" style="text-align:center;color:var(--muted);font-size:12px;padding:6px">2025년</td></tr>`;
-
-  // 2025 data
-  monthly25.forEach((m,idx) => {
-    const prev = idx > 0 ? monthly25[idx-1] : null;
-    const mom = prev && prev.total > 0 ? ((m.total - prev.total) / prev.total * 100) : null;
-    const same24 = null; // no 2024 data
-    rows += `<tr>
-      <td>25-${MONTH_NAMES[m.month-1]}</td>
-      <td class="num">${fmtN(m.total)}</td>
-      <td class="num">${fmtN(m.domestic)}</td>
-      <td class="num">${fmtN(m.overseas)}</td>
-      <td>${pctStr(mom)}</td>
-      <td>${pctStr(null)}</td>
-    </tr>`;
-  });
+  if(year === 2026) {
+    // Show only 2026 monthly data with MoM (within 2026) and YoY (vs 2025 same month)
+    monthly26.forEach((m,idx) => {
+      const prev = idx > 0 ? monthly26[idx-1] : null;
+      const mom = prev && prev.total > 0 ? ((m.total - prev.total) / prev.total * 100) : null;
+      const same25 = monthly25.find(x=>x.month===m.month);
+      const yoy = same25 && same25.total > 0 ? ((m.total - same25.total) / same25.total * 100) : null;
+      rows += `<tr>
+        <td>26-${MONTH_NAMES[m.month-1]}</td>
+        <td class="num">${fmtN(m.total)}</td>
+        <td class="num">${fmtN(m.domestic)}</td>
+        <td class="num">${fmtN(m.overseas)}</td>
+        <td>${pctStr(mom)}</td>
+        <td>${pctStr(yoy)}</td>
+      </tr>`;
+    });
+  } else {
+    // Show only 2025 monthly data with MoM (within 2025) and YoY (vs 2024 - not available)
+    monthly25.forEach((m,idx) => {
+      const prev = idx > 0 ? monthly25[idx-1] : null;
+      const mom = prev && prev.total > 0 ? ((m.total - prev.total) / prev.total * 100) : null;
+      rows += `<tr>
+        <td>25-${MONTH_NAMES[m.month-1]}</td>
+        <td class="num">${fmtN(m.total)}</td>
+        <td class="num">${fmtN(m.domestic)}</td>
+        <td class="num">${fmtN(m.overseas)}</td>
+        <td>${pctStr(mom)}</td>
+        <td>${pctStr(null)}</td>
+      </tr>`;
+    });
+  }
 
   el.innerHTML = `<thead><tr><th>월</th><th>전사</th><th>국내</th><th>해외</th><th>MoM</th><th>YoY</th></tr></thead>
   <tbody>${rows}</tbody>`;
@@ -1110,6 +1123,13 @@ function renderChannelPage(tab) {
   const chMtdTarget = T[cfg.targetKey] ? T[cfg.targetKey][String(cm)]||0 : 0;
   const chMtdPct = chMtdTarget>0 ? cmVal26/chMtdTarget*100 : null;
 
+  // Business day forecast for channel MTD
+  const ud = parseUpdatedDate();
+  const totalBizDaysCurMonth = bizDaysInMonth(ud.year, ud.month);
+  const elapsedBizDaysCurMonth = bizDaysElapsed(ud.year, ud.month, ud.day);
+  const chForecast = elapsedBizDaysCurMonth > 0 ? cmVal26 * (totalBizDaysCurMonth / elapsedBizDaysCurMonth) : cmVal26;
+  const chForecastPct = chMtdTarget > 0 ? (chForecast / chMtdTarget * 100) : null;
+
   // 3 KPI cards: MTD 달성률, YTD 매출(+YoY), 연간 목표
   const kpis = [
     {
@@ -1117,6 +1137,7 @@ function renderChannelPage(tab) {
       val:fmtN(cmVal26),
       pct:chMtdPct,
       sub:`목표 ${fmtN(chMtdTarget)} 대비 ${chMtdPct!=null?chMtdPct.toFixed(1)+'%':'-'}`,
+      sub2:`예상 착지: <b>${fmtN(chForecast)}</b> (목표 대비 ${chForecastPct!=null?'<b style="color:'+(chForecastPct>=100?'var(--green)':chForecastPct>=70?'var(--orange)':'var(--red)')+'">'+chForecastPct.toFixed(1)+'%</b>':'-'})`,
       up:null
     },
     {
@@ -1143,12 +1164,14 @@ function renderChannelPage(tab) {
       </div>
       ${k.pct!=null?`<div class="progress-bar"><div class="progress-fill ${fillClass(k.pct)}" style="width:${Math.min(k.pct,100)}%"></div></div>`:''}
       <div class="kpi-sub"><span class="${k.up!=null?(k.up?'up':'down'):'neutral'}">${k.sub||''}</span></div>
+      ${k.sub2?`<div class="kpi-sub" style="margin-top:3px"><span class="neutral">${k.sub2}</span></div>`:''}
     </div>`}).join('');
 
   // MTD with toggle
   renderChMtd(tab, state.chMtdMode[tab]||'ytd');
 
   renderChBar(tab, state.chTabView[tab]||'month', yr25, yr26);
+  renderChFilter(tab);
   renderChLine(tab, state.chLineMode[tab]||'month');
   renderChMixBar(tab, state.pieYear[tab]||2025);
   renderChTable(tab, state.chTblView[tab]||'month', yr25, yr26);
@@ -1270,6 +1293,47 @@ function setChLineOverlay(tab, mode, btn) {
   renderChLine(tab, state.chLineMode[tab]||'month');
 }
 
+function renderChFilter(tab) {
+  const cfg = CHANNEL_CONFIG[tab];
+  const channels = Object.keys(cfg.targets);
+  if(!state.chFilter[tab]) state.chFilter[tab] = ['all'];
+  const selected = state.chFilter[tab];
+
+  const isAll = selected.includes('all');
+  let html = `<button class="ch-filter-btn ${isAll?'active':''}" onclick="toggleChFilter('${tab}','all')">전체</button>`;
+  channels.forEach(ch => {
+    const active = isAll || selected.includes(ch);
+    html += `<button class="ch-filter-btn ${active?'active':''}" onclick="toggleChFilter('${tab}','${ch}')">${ch}</button>`;
+  });
+  const el1 = document.getElementById('ch-filter-'+tab);
+  const el2 = document.getElementById('ch-filter-line-'+tab);
+  if(el1) el1.innerHTML = html;
+  if(el2) el2.innerHTML = html;
+}
+
+function toggleChFilter(tab, ch) {
+  if(!state.chFilter[tab]) state.chFilter[tab] = ['all'];
+  if(ch === 'all') {
+    state.chFilter[tab] = ['all'];
+  } else {
+    state.chFilter[tab] = state.chFilter[tab].filter(c => c !== 'all');
+    if(state.chFilter[tab].includes(ch)) {
+      state.chFilter[tab] = state.chFilter[tab].filter(c => c !== ch);
+    } else {
+      state.chFilter[tab].push(ch);
+    }
+    if(state.chFilter[tab].length === 0) state.chFilter[tab] = ['all'];
+  }
+  renderChFilter(tab);
+  renderChLine(tab, state.chLineMode[tab]||'month');
+  renderChTable(tab, state.chTblView[tab]||'month', D['2025'][tab], D['2026'][tab]);
+}
+
+function isChVisible(tab, ch) {
+  if(!state.chFilter[tab] || state.chFilter[tab].includes('all')) return true;
+  return state.chFilter[tab].includes(ch);
+}
+
 function renderChLine(tab, mode) {
   const cm = D.cur_month;
   const yr26 = D['2026'][tab];
@@ -1283,7 +1347,7 @@ function renderChLine(tab, mode) {
     const MONTH_NAMES = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
     const chs26 = Object.keys(monthly26);
     const chs25 = Object.keys(monthly25);
-    const allChs = [...new Set([...chs26, ...chs25])];
+    const allChs = [...new Set([...chs26, ...chs25])].filter(ch=>isChVisible(tab,ch));
 
     if(overlay==='seq') {
       // Sequential timeline: 2025-01 ... 2025-12 2026-01 ... 2026-CM
@@ -1365,7 +1429,7 @@ function renderChLine(tab, mode) {
       const wk25 = Object.keys(weeklyTotal25).sort((a,b)=>+a-+b);
       const wk26 = Object.keys(weeklyTotal26).sort((a,b)=>+a-+b);
       const labels = [...wk25.map(w=>`25-W${w.padStart(2,'0')}`),...wk26.map(w=>`26-W${w.padStart(2,'0')}`)];
-      const allChs = [...new Set([...Object.keys(weekly25||{}),...Object.keys(weekly26)])];
+      const allChs = [...new Set([...Object.keys(weekly25||{}),...Object.keys(weekly26)])].filter(ch=>isChVisible(tab,ch));
       const datasets = allChs.map((ch,i)=>{
         const data = [];
         wk25.forEach(w=>data.push(weekly25&&weekly25[ch]&&weekly25[ch][w]?weekly25[ch][w]:null));
@@ -1387,7 +1451,7 @@ function renderChLine(tab, mode) {
       Object.keys(weeklyTotal25).forEach(w=>allWeekNums.add(w));
       Object.keys(weeklyTotal26).forEach(w=>allWeekNums.add(w));
       const weekNums = [...allWeekNums].sort((a,b)=>+a-+b);
-      const allChs = [...new Set([...Object.keys(weekly25||{}),...Object.keys(weekly26)])];
+      const allChs = [...new Set([...Object.keys(weekly25||{}),...Object.keys(weekly26)])].filter(ch=>isChVisible(tab,ch));
       const datasets = [];
       allChs.forEach((ch,i) => {
         const color = COLORS[i%COLORS.length];
@@ -1473,7 +1537,7 @@ function renderChTable(tab, view, yr25, yr26) {
   const hdrs=periods.map(p=>`<th>${prefix}${p.padStart(2,'0')}</th>`).join('');
   let html=`<thead><tr><th>채널</th>${hdrs}<th>합계</th><th>YoY</th></tr></thead><tbody>`;
 
-  const channels=['합계',...Object.keys(d26)];
+  const channels=['합계',...Object.keys(d26).filter(ch=>isChVisible(tab,ch))];
   channels.forEach(ch=>{
     const is_total=ch==='합계';
     const row26=is_total?t26:d26[ch]||{};
