@@ -1531,42 +1531,49 @@ function renderChTable(tab, view, yr25, yr26) {
 
   const periods=Object.keys(t26).sort((a,b)=>+a-+b)
     .filter(k=>view==='month'?+k<=cm:true);
-  const prefix=view==='month'?'월':'W';
   const el=document.getElementById('ch-tbl-'+tab);
+  const MONTH_NAMES=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
-  // Vertical layout: periods as rows, channels as columns
+  // Vertical layout: periods as rows, channels as columns (same as summary)
   const visibleChs = Object.keys(d26).filter(ch=>isChVisible(tab,ch));
   const columns = ['합계', ...visibleChs];
 
+  // Weekly labels from summary data for matching
+  const weekLabels = {};
+  if(view==='week' && D.summary && D.summary.weekly) {
+    D.summary.weekly.filter(w=>w.year===2026).forEach(w=>{ weekLabels[String(w.week)] = w.label; });
+  }
+
   const chHeaders = columns.map(ch=>`<th>${ch}</th>`).join('');
-  let html=`<thead><tr><th>${view==='month'?'월':'주'}</th>${chHeaders}<th>YoY</th></tr></thead><tbody>`;
+  const wowLabel = view==='month'?'MoM':'WoW';
+  let html=`<thead><tr><th>${view==='month'?'월':'주차'}</th>${chHeaders}<th>${wowLabel}</th><th>YoY</th></tr></thead><tbody>`;
 
   // Data rows (most recent first)
   const sortedPeriods = [...periods].reverse();
-  sortedPeriods.forEach(p=>{
+  sortedPeriods.forEach((p, idx)=>{
     const cells = columns.map(ch=>{
       const is_total = ch==='합계';
       const val = is_total ? (t26[p]||0) : (d26[ch]?d26[ch][p]||0:0);
       return `<td class="num">${val?fmtN(val):'-'}</td>`;
     }).join('');
-    // YoY for total
+    // WoW/MoM for total
     const cur = t26[p]||0;
-    const prev = t25[p]||0;
-    const yoy = prev>0 ? (cur-prev)/prev*100 : null;
-    const label = view==='month' ? `${p}${prefix}` : `${prefix}${String(p).padStart(2,'0')}`;
-    html+=`<tr><td>${label}</td>${cells}<td>${pctStr(yoy)}</td></tr>`;
+    const prevIdx = periods.indexOf(p) - 1;
+    const prevP = prevIdx >= 0 ? periods[prevIdx] : null;
+    const prevVal = prevP ? (t26[prevP]||0) : 0;
+    const wow = prevVal>0 ? (cur-prevVal)/prevVal*100 : null;
+    // YoY for total
+    const prev25 = t25[p]||0;
+    const yoy = prev25>0 ? (cur-prev25)/prev25*100 : null;
+    // Label formatting matching summary style
+    let label;
+    if(view==='month') {
+      label = `26-${MONTH_NAMES[+p-1]}` || `26-${p}월`;
+    } else {
+      label = weekLabels[p] || `W${String(p).padStart(2,'0')}`;
+    }
+    html+=`<tr><td>${label}</td>${cells}<td>${pctStr(wow)}</td><td>${pctStr(yoy)}</td></tr>`;
   });
-
-  // YTD/합계 row
-  const totRow = columns.map(ch=>{
-    const is_total = ch==='합계';
-    const sum26 = periods.reduce((a,p)=>a+((is_total?t26:d26[ch]||{})[p]||0),0);
-    return `<td class="num" style="font-weight:700">${fmtN(sum26)}</td>`;
-  }).join('');
-  const totAll26 = periods.reduce((a,p)=>a+(t26[p]||0),0);
-  const totAll25 = periods.reduce((a,p)=>a+(t25[p]||0),0);
-  const totYoy = totAll25>0 ? (totAll26-totAll25)/totAll25*100 : null;
-  html+=`<tr style="border-top:2px solid var(--border);font-weight:700"><td>합계</td>${totRow}<td>${pctStr(totYoy)}</td></tr>`;
 
   html+='</tbody>';
   el.innerHTML=html;
