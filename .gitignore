@@ -25,6 +25,10 @@ confidential/
 .claude/settings.json
 .claude/settings.local.json
 
+# === 암호화 원본/스크립트 ===
+index_original.html
+encrypt.py
+
 # === 임시/빌드 ===
 *.log
 *.tmp
