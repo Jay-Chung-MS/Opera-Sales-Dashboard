@@ -116,6 +116,15 @@ tr:hover td { background:#eaf4fb; }
 .ch-filter-btn { padding:5px 12px; border-radius:6px; font-size:12px; cursor:pointer; color:var(--muted); background:var(--surface); border:1px solid var(--border); transition:all .15s; }
 .ch-filter-btn:hover { color:var(--text); border-color:var(--muted); }
 .ch-filter-btn.active { background:var(--surface2); color:var(--brand); border-color:var(--brand); }
+
+.input-status-bar { display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:8px 12px; margin-bottom:16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:12px; }
+.input-status-bar .label { color:var(--muted); margin-right:4px; }
+.input-status-pill { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:500; border:1px solid transparent; }
+.input-status-pill.ok    { background:#e8f5e9; color:var(--green);  border-color:#c8e6c9; }
+.input-status-pill.warn  { background:#fff3e0; color:var(--orange); border-color:#ffe0b2; }
+.input-status-pill.late  { background:#ffebee; color:var(--red);    border-color:#ffcdd2; }
+.input-status-pill .wk { font-weight:700; }
+.input-status-pill .dt { opacity:.7; }
 </style>
 </head>
 <body>
@@ -208,6 +217,7 @@ tr:hover td { background:#eaf4fb; }
 <!-- =================== DOM B2B =================== -->
 <div class="page" id="page-dom_b2b">
   <div class="kpi-grid" id="kpi-dom_b2b"></div>
+  <div class="input-status-bar" id="input-status-dom_b2b"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">국내 B2B 합계 추이
       <div class="toggle" style="margin-left:auto">
@@ -268,6 +278,7 @@ tr:hover td { background:#eaf4fb; }
 <!-- =================== DOM B2C =================== -->
 <div class="page" id="page-dom_b2c">
   <div class="kpi-grid" id="kpi-dom_b2c"></div>
+  <div class="input-status-bar" id="input-status-dom_b2c"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">국내 B2C 합계 추이
       <div class="toggle" style="margin-left:auto">
@@ -328,6 +339,7 @@ tr:hover td { background:#eaf4fb; }
 <!-- =================== OVS DIRECT =================== -->
 <div class="page" id="page-ovs_direct">
   <div class="kpi-grid" id="kpi-ovs_direct"></div>
+  <div class="input-status-bar" id="input-status-ovs_direct"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">해외 직수출 합계 추이
       <div class="toggle" style="margin-left:auto">
@@ -388,6 +400,7 @@ tr:hover td { background:#eaf4fb; }
 <!-- =================== OVS INDIRECT =================== -->
 <div class="page" id="page-ovs_indirect">
   <div class="kpi-grid" id="kpi-ovs_indirect"></div>
+  <div class="input-status-bar" id="input-status-ovs_indirect"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">해외 간접수출 합계 추이
       <div class="toggle" style="margin-left:auto">
@@ -448,6 +461,7 @@ tr:hover td { background:#eaf4fb; }
 <!-- =================== OVS B2C =================== -->
 <div class="page" id="page-ovs_b2c">
   <div class="kpi-grid" id="kpi-ovs_b2c"></div>
+  <div class="input-status-bar" id="input-status-ovs_b2c"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">해외 B2C 합계 추이
       <div class="toggle" style="margin-left:auto">
@@ -1092,9 +1106,51 @@ const CHANNEL_CONFIG = {
   }
 };
 
+// ISO week → 그 주 일요일(끝나는 날) "M/D"
+function isoWeekEnd(year, week) {
+  const simple = new Date(year, 0, 1 + (week - 1) * 7);
+  const dow = simple.getDay();
+  const monday = new Date(simple);
+  monday.setDate(simple.getDate() + (dow <= 4 ? 1 - dow : 8 - dow));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  return (sunday.getMonth()+1) + '/' + sunday.getDate();
+}
+// 현재 ISO 주차 (updated 기준)
+function currentISOWeek() {
+  const ud = parseUpdatedDate();
+  const d = new Date(ud.year, ud.month-1, ud.day);
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThu = new Date(target.getFullYear(),0,4);
+  const diff = (target - firstThu) / 86400000;
+  return 1 + Math.round((diff - 3 + (firstThu.getDay()+6)%7) / 7);
+}
+
+function renderInputStatus(tab) {
+  const el = document.getElementById('input-status-'+tab);
+  if(!el || !D || !D.last_input) { if(el) el.innerHTML=''; return; }
+  const data = D.last_input[tab] || {};
+  const groups = Object.keys(data);
+  if(groups.length === 0) { el.innerHTML=''; return; }
+  const curW = currentISOWeek();
+  const html = ['<span class="label">데이터 입력 현황 (마지막 주차):</span>'];
+  // ok: 1주 이내(현재 또는 직전 주), warn: 2주 지연, late: 3주 이상 지연
+  const sorted = groups.sort((a,b)=> (data[b]||0)-(data[a]||0));
+  for(const g of sorted) {
+    const w = data[g];
+    const gap = curW - w;
+    const cls = gap <= 1 ? 'ok' : (gap === 2 ? 'warn' : 'late');
+    const icon = gap <= 1 ? '✓' : (gap === 2 ? '⚠' : '✕');
+    html.push(`<span class="input-status-pill ${cls}" title="${gap}주 지연"><span>${icon}</span><span>${g}</span><span class="wk">W${String(w).padStart(2,'0')}</span><span class="dt">~${isoWeekEnd(2026,w)}</span></span>`);
+  }
+  el.innerHTML = html.join('');
+}
+
 function renderChannelPage(tab) {
   const cfg = CHANNEL_CONFIG[tab];
   if(!cfg||!D) return;
+  renderInputStatus(tab);
   const cm = D.cur_month;
   const yr26 = D['2026'][tab];
   const yr25 = D['2025'][tab];
